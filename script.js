@@ -243,50 +243,54 @@ function renderSavedTokens() {
     value.dataset.address = t.address;
 
     // Actions: copy, explorer, remove
-    const actions = document.createElement('div');
-    actions.style.display = 'flex';
-    actions.style.gap = '8px';
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.gap = "8px";
 
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'small-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.title = 'Copy token address';
-    copyBtn.addEventListener('click', async (e) => {
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "small-btn";
+    copyBtn.textContent = "Copy";
+    copyBtn.title = "Copy token address";
+    copyBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      try{
+      try {
         await navigator.clipboard.writeText(t.address);
-        copyBtn.textContent = 'Copied';
-        setTimeout(()=>{ copyBtn.textContent = 'Copy'; }, 1200);
-      }catch(err){
-        alert('Copy failed');
+        copyBtn.textContent = "Copied";
+        setTimeout(() => {
+          copyBtn.textContent = "Copy";
+        }, 1200);
+      } catch (err) {
+        alert("Copy failed");
       }
     });
 
-    const explorerA = document.createElement('a');
-    explorerA.className = 'small-btn';
-    explorerA.style.textDecoration = 'none';
-    explorerA.style.display = 'inline-flex';
-    explorerA.style.alignItems = 'center';
-    explorerA.target = '_blank';
-    explorerA.rel = 'noopener';
-    explorerA.textContent = 'Explorer';
+    const explorerA = document.createElement("a");
+    explorerA.className = "small-btn";
+    explorerA.style.textDecoration = "none";
+    explorerA.style.display = "inline-flex";
+    explorerA.style.alignItems = "center";
+    explorerA.target = "_blank";
+    explorerA.rel = "noopener";
+    explorerA.textContent = "Explorer";
 
     // build explorer href based on current chain info
     const chainInfo = getChainInfo(currentChainId);
-    if(chainInfo && chainInfo.explorer){
+    if (chainInfo && chainInfo.explorer) {
       // prefer token pages, fallback to address page
-      explorerA.href = `${chainInfo.explorer.replace(/\/$/, '')}/token/${t.address}`;
+      explorerA.href = `${chainInfo.explorer.replace(/\/$/, "")}/token/${
+        t.address
+      }`;
     } else {
-      explorerA.href = '#';
+      explorerA.href = "#";
     }
 
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = 'Remove';
-    removeBtn.style.padding = '6px 8px';
-    removeBtn.style.borderRadius = '8px';
-    removeBtn.style.border = 'none';
-    removeBtn.style.cursor = 'pointer';
-    removeBtn.addEventListener('click', (e)=>{
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "Remove";
+    removeBtn.style.padding = "6px 8px";
+    removeBtn.style.borderRadius = "8px";
+    removeBtn.style.border = "none";
+    removeBtn.style.cursor = "pointer";
+    removeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       savedTokens.splice(idx, 1);
       persistTokens();
