@@ -71,6 +71,7 @@
         max-width: 960px;
         margin: 0 auto;
         padding: 20px;
+        position: relative;
       }
 
       .card {
@@ -144,6 +145,77 @@
         transform: translateY(-2px);
       }
 
+      /* Network display */
+      #networkDisplay {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+      }
+      [data-theme="dark"] #networkDisplay {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+      }
+
+      #networkWarning {
+        margin-left: 8px;
+        color: #b91c1c;
+        font-size: 13px;
+      }
+      #switchNetworkBtn {
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: none;
+        background: #ef4444;
+        color: white;
+        cursor: pointer;
+      }
+
+      /* Spinner */
+      .spinner {
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0.6));
+        box-shadow: var(--shadow);
+      }
+      .spinner.visible {
+        display: flex;
+      }
+      .spinner:after {
+        content: "";
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid rgba(0, 0, 0, 0.08);
+        border-top-color: rgba(0, 0, 0, 0.35);
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* skeleton */
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 0.06),
+          rgba(0, 0, 0, 0.02),
+          rgba(0, 0, 0, 0.06)
+        );
+        color: transparent;
+      }
+
       /* Main layout */
       .grid {
         display: grid;
@@ -186,6 +258,20 @@
       }
       #connectButton:active {
         transform: translateY(-1px);
+      }
+
+      .account-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .small-btn {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.06);
       }
 
       .account-info {
@@ -296,6 +382,7 @@
   <body>
     <div class="app">
       <div class="card">
+        <div class="spinner" id="spinner" aria-hidden="true"></div>
         <header class="app-header">
           <div class="brand">
             <div class="logo">W</div>
@@ -306,6 +393,8 @@
           </div>
 
           <div class="controls">
+            <div id="networkDisplay">Network: --</div>
+            <div id="networkWarning"></div>
             <button id="themeToggle" aria-label="Toggle theme">🌙</button>
           </div>
         </header>
@@ -317,6 +406,23 @@
               <div style="height: 8px"></div>
               <div class="account-info">
                 <p id="account" class="account-text">Not connected</p>
+                <div class="account-actions">
+                  <button
+                    id="copyAddressBtn"
+                    class="small-btn"
+                    title="Copy address"
+                  >
+                    Copy
+                  </button>
+                  <a
+                    id="explorerLink"
+                    class="small-btn"
+                    style="text-decoration: none; color: inherit"
+                    target="_blank"
+                    rel="noopener"
+                    >Explorer</a
+                  >
+                </div>
               </div>
             </div>
 
@@ -338,6 +444,35 @@
           </section>
 
           <section>
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                margin-bottom: 8px;
+              "
+            >
+              <button id="refreshBtn" class="small-btn">Refresh</button>
+              <label style="font-size: 13px; color: var(--muted)"
+                >Auto-refresh:</label
+              >
+              <select
+                id="autoRefreshInterval"
+                style="
+                  padding: 8px;
+                  border-radius: 8px;
+                  border: 1px solid rgba(0, 0, 0, 0.06);
+                "
+              >
+                <option value="0">Off</option>
+                <option value="15000">15s</option>
+                <option value="30000">30s</option>
+                <option value="60000">60s</option>
+              </select>
+              <div style="flex: 1"></div>
+              <div id="switchNetworkContainer"></div>
+            </div>
+
             <div class="balances">
               <div class="info-card">
                 <div class="info-icon eth" aria-hidden="true">
@@ -399,6 +534,57 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Token management card -->
+            <div style="margin-top: 12px" class="card">
+              <div style="display: flex; gap: 8px; align-items: center">
+                <input
+                  id="tokenAddressInput"
+                  type="text"
+                  placeholder="ERC-20 contract address (0x...)"
+                  style="
+                    flex: 1;
+                    padding: 10px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(0, 0, 0, 0.06);
+                  "
+                />
+                <button
+                  id="addTokenButton"
+                  style="
+                    padding: 10px 12px;
+                    border-radius: 8px;
+                    background: linear-gradient(90deg, #10b981, #06b6d4);
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                  "
+                >
+                  Add Token
+                </button>
+              </div>
+              <p
+                style="margin: 8px 0 0 0; font-size: 13px; color: var(--muted)"
+              >
+                Add any ERC-20 token by contract address. Tokens are saved
+                locally.
+              </p>
+            </div>
+
+            <!-- Tokens list section (moved under the Add Token UI) -->
+            <div style="margin-top: 12px" class="card">
+              <h4
+                style="margin: 0 0 8px 0; color: var(--muted); font-size: 13px"
+              >
+                Tracked Tokens
+              </h4>
+              <div id="tokensList" style="display: block; gap: 10px"></div>
+              <p
+                style="margin: 8px 0 0 0; font-size: 12px; color: var(--muted)"
+              >
+                Remove tokens to stop tracking them. Tokens persist locally.
+              </p>
             </div>
 
             <footer class="small">
