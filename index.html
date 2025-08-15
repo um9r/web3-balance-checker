@@ -55,12 +55,16 @@
             transparent 12%
           ),
           linear-gradient(180deg, var(--bg-1), var(--bg-2));
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        background-size: cover;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         display: flex;
-        align-items: center;
+        /* align to top so long content can scroll and header stays reachable */
+        align-items: flex-start;
         justify-content: center;
-        padding: 24px;
+        padding: 32px 24px 48px 24px;
         transition: background 300ms ease;
         min-height: 100vh;
       }
