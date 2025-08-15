@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Web3 Wallet Balance Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-1: #f8fafc;
+        --bg-2: #eef2ff;
+        --card-bg: rgba(255, 255, 255, 0.7);
+        --muted: #6b7280;
+        --accent: linear-gradient(135deg, #7c3aed, #06b6d4);
+        --glass-border: rgba(255, 255, 255, 0.6);
+        --shadow: 0 10px 30px rgba(12, 15, 20, 0.08);
+        --glass-blur: 8px;
+        color-scheme: light;
+      }
+
+      [data-theme="dark"] {
+        --bg-1: #0f1724;
+        --bg-2: #071127;
+        --card-bg: rgba(6, 8, 12, 0.55);
+        --muted: #9ca3af;
+        --accent: linear-gradient(135deg, #5eead4, #60a5fa);
+        --glass-border: rgba(255, 255, 255, 0.04);
+        --shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
+        --glass-blur: 6px;
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        background: radial-gradient(
+            1200px 600px at 10% 10%,
+            rgba(99, 102, 241, 0.08),
+            transparent 12%
+          ),
+          radial-gradient(
+            900px 500px at 90% 90%,
+            rgba(6, 182, 212, 0.06),
+            transparent 12%
+          ),
+          linear-gradient(180deg, var(--bg-1), var(--bg-2));
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        transition: background 300ms ease;
+        min-height: 100vh;
+      }
+
+      /* App shell */
+      .app {
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .card {
+        background: var(--card-bg);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(var(--glass-blur));
+        transition: transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1),
+          box-shadow 220ms ease, border-color 220ms ease;
+      }
+
+      header.app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: inline-grid;
+        place-items: center;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        box-shadow: 0 6px 18px rgba(12, 15, 20, 0.12);
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .subtitle {
+        font-size: 13px;
+        margin: 0;
+        color: var(--muted);
+      }
+
+      /* Theme toggle */
+      .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      #themeToggle {
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 160ms ease, background 160ms ease;
+      }
+      #themeToggle:hover {
+        transform: translateY(-2px);
+      }
+
+      /* Main layout */
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      @media (min-width: 800px) {
+        .grid {
+          grid-template-columns: 320px 1fr;
+          align-items: start;
+        }
+      }
+
+      /* Left column - wallet panel */
+      .wallet-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      #connectButton {
+        appearance: none;
+        outline: none;
+        border: none;
+        padding: 14px 18px;
+        font-size: 16px;
+        font-weight: 700;
+        border-radius: 12px;
+        color: white;
+        background: linear-gradient(90deg, #6d28d9, #06b6d4);
+        cursor: pointer;
+        box-shadow: 0 8px 30px rgba(99, 102, 241, 0.18);
+        transition: transform 180ms ease, box-shadow 180ms ease,
+          opacity 160ms ease;
+      }
+      #connectButton:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 40px rgba(99, 102, 241, 0.22);
+      }
+      #connectButton:active {
+        transform: translateY(-1px);
+      }
+
+      .account-info {
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.45),
+          rgba(255, 255, 255, 0.4)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      [data-theme="dark"] .account-info {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.02)
+        );
+      }
+
+      .account-text {
+        font-size: 13px;
+        color: var(--muted);
+        word-break: break-all;
+      }
+
+      /* Right column - balances */
+      .balances {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      @media (min-width: 540px) {
+        .balances {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .info-card {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 14px;
+        border-radius: 12px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.6),
+          rgba(255, 255, 255, 0.45)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      [data-theme="dark"] .info-card {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.02)
+        );
+      }
+      .info-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 40px rgba(2, 6, 23, 0.06);
+      }
+
+      .info-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        color: white;
+        flex-shrink: 0;
+      }
+      .eth {
+        background: linear-gradient(180deg, #627eea, #4f46e5);
+      }
+      .usdt {
+        background: linear-gradient(180deg, #06b6d4, #5eead4);
+      }
+
+      .info-body {
+        display: flex;
+        flex-direction: column;
+      }
+      .info-label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .info-value {
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+
+      footer.small {
+        margin-top: 14px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      /* small tweaks */
+      .card:hover {
+        transform: translateY(-6px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="card">
+        <header class="app-header">
+          <div class="brand">
+            <div class="logo">W</div>
+            <div>
+              <p class="title">Wallet Balance Checker</p>
+              <p class="subtitle">Connect your Web3 wallet to view balances</p>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="themeToggle" aria-label="Toggle theme">🌙</button>
+          </div>
+        </header>
+
+        <main class="grid">
+          <section class="wallet-panel">
+            <div class="card">
+              <button id="connectButton">Connect Wallet</button>
+              <div style="height: 8px"></div>
+              <div class="account-info">
+                <p id="account" class="account-text">Not connected</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <p style="margin: 0; font-size: 13px; color: var(--muted)">
+                Quick Tips
+              </p>
+              <ul
+                style="
+                  margin: 8px 0 0 18px;
+                  color: var(--muted);
+                  font-size: 13px;
+                "
+              >
+                <li>Use MetaMask or another injected wallet</li>
+                <li>Balances update on connect</li>
+              </ul>
+            </div>
+          </section>
+
+          <section>
+            <div class="balances">
+              <div class="info-card">
+                <div class="info-icon eth" aria-hidden="true">
+                  <!-- Ethereum icon -->
+                  <svg
+                    width="26"
+                    height="26"
+                    viewBox="0 0 256 417"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M127.6 0L124.8 9.2V279.3L127.6 282.1L255.2 209.4L127.6 0Z"
+                      fill="rgba(255,255,255,0.95)"
+                    />
+                    <path
+                      d="M127.6 0L0 209.4L127.6 282.1V156.6V0Z"
+                      fill="rgba(255,255,255,0.85)"
+                    />
+                    <path
+                      d="M127.6 306.9L125.2 309.2V417L127.6 416.7L255.3 233.5L127.6 306.9Z"
+                      fill="rgba(255,255,255,0.7)"
+                    />
+                    <path
+                      d="M127.6 416.7V306.9L0 233.5L127.6 416.7Z"
+                      fill="rgba(255,255,255,0.6)"
+                    />
+                  </svg>
+                </div>
+                <div class="info-body">
+                  <div class="info-label">Ethereum</div>
+                  <div id="ethBalance" class="info-value">ETH Balance: --</div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <div class="info-icon usdt" aria-hidden="true">
+                  <!-- USDT icon -->
+                  <svg
+                    width="26"
+                    height="26"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="16"
+                      cy="16"
+                      r="16"
+                      fill="rgba(255,255,255,0.18)"
+                    />
+                    <path d="M9 12h14v2H9zM9 18h10v2H9z" fill="white" />
+                  </svg>
+                </div>
+                <div class="info-body">
+                  <div class="info-label">USDT (ERC‑20)</div>
+                  <div id="tokenBalance" class="info-value">
+                    USDT Balance: --
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <footer class="small">
+              Balances are read-only and fetched from the connected wallet
+            </footer>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Theme toggle - minimal, does not touch wallet functionality
+      (function () {
+        const btn = document.getElementById("themeToggle");
+        const root = document.documentElement;
+        const stored = localStorage.getItem("pref-theme");
+        if (stored === "dark") root.setAttribute("data-theme", "dark");
+        function updateIcon() {
+          btn.textContent =
+            root.getAttribute("data-theme") === "dark" ? "☀️" : "🌙";
+        }
+        updateIcon();
+        btn.addEventListener("click", () => {
+          const now =
+            root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          root.setAttribute("data-theme", now === "dark" ? "dark" : "");
+          localStorage.setItem("pref-theme", now === "dark" ? "dark" : "light");
+          updateIcon();
+        });
+      })();
+    </script>
+
+    <script src="script.js"></script>
+  </body>
+</html>
