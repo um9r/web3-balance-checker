@@ -572,26 +572,23 @@
               </p>
             </div>
 
-            <!-- Tokens list section (moved under the Add Token UI) -->
-            <div style="margin-top: 12px" class="card">
-              <h4
-                style="margin: 0 0 8px 0; color: var(--muted); font-size: 13px"
-              >
-                Tracked Tokens
-              </h4>
-              <div id="tokensList" style="display: block; gap: 10px"></div>
-              <p
-                style="margin: 8px 0 0 0; font-size: 12px; color: var(--muted)"
-              >
-                Remove tokens to stop tracking them. Tokens persist locally.
-              </p>
-            </div>
-
+            <!-- footer kept in right column -->
             <footer class="small">
               Balances are read-only and fetched from the connected wallet
             </footer>
           </section>
         </main>
+
+        <!-- Tokens list section moved here so it spans full width -->
+        <div style="margin-top: 12px" class="card">
+          <h4 style="margin: 0 0 8px 0; color: var(--muted); font-size: 13px">
+            Tracked Tokens
+          </h4>
+          <div id="tokensList" style="display: block; gap: 10px"></div>
+          <p style="margin: 8px 0 0 0; font-size: 12px; color: var(--muted)">
+            Remove tokens to stop tracking them. Tokens persist locally.
+          </p>
+        </div>
       </div>
     </div>
 
